@@ -18,7 +18,15 @@ const VERSION_PATCH = 1;
 /** @var string Version information from the underlying liboqs library. */
 const VERSION_TEXT = '0.14.1-dev';
 
-class Exception extends \Exception {}
+/** @var string System random number generator. */
+const RAND_ALG_SYSTEM = 'system';
+
+/** @var string OpenSSL random number generator. */
+const RAND_ALG_OPENSSL = 'OpenSSL';
+
+class Exception extends \Exception
+{
+}
 
 final class Kem
 {
@@ -121,35 +129,54 @@ final class Kem
     /**
      * @param string $algorithm
      */
-    public function __construct(string $algorithm) {}
+    public function __construct(string $algorithm)
+    {
+    }
 
     /**
      * @return array
      */
-    public function sizes(): array {}
+    public function sizes(): array
+    {
+    }
 
     /**
      * @return array
      */
-    public function keypair(): array {}
+    public function keypair(): array
+    {
+    }
 
     /**
      * @param string $publicKey
      * @return array
      */
-    public function encap(string $publicKey): array {}
+    public function encap(string $publicKey): array
+    {
+    }
 
     /**
      * @param string $ciphertext
      * @param string $secretKey
      * @return string
      */
-    public function decap(string $ciphertext, string $secretKey): string {}
+    public function decap(string $ciphertext, string $secretKey): string
+    {
+    }
 
     /**
      * @return array
      */
-    public static function algorithms(): array {}
+    public function details(): array
+    {
+    }
+
+    /**
+     * @return array
+     */
+    public static function algorithms(): array
+    {
+    }
 
 }
 final class Sig
@@ -820,19 +847,25 @@ final class Sig
     /**
      * @param string $algorithm
      */
-    public function __construct(string $algorithm) {}
+    public function __construct(string $algorithm)
+    {
+    }
 
     /**
      * @return array
      */
-    public function keypair(): array {}
+    public function keypair(): array
+    {
+    }
 
     /**
      * @param string $message
      * @param string $secretKey
      * @return string
      */
-    public function sign(string $message, string $secretKey): string {}
+    public function sign(string $message, string $secretKey): string
+    {
+    }
 
     /**
      * @param string $message
@@ -840,11 +873,30 @@ final class Sig
      * @param string $publicKey
      * @return bool
      */
-    public function verify(string $message, string $signature, string $publicKey): bool {}
+    public function verify(string $message, string $signature, string $publicKey): bool
+    {
+    }
 
     /**
      * @return array
      */
-    public static function algorithms(): array {}
+    public function details(): array
+    {
+    }
 
+    /**
+     * @return array
+     */
+    public static function algorithms(): array
+    {
+    }
+
+}
+
+/**
+ * @param string $algorithm
+ * @return void
+ */
+function randombytes_switch_algorithm(string $algorithm): void
+{
 }

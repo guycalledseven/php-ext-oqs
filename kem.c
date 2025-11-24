@@ -107,6 +107,23 @@ PHP_METHOD(Kem, decap)
     RETURN_STR(ss);
 }
 
+/* array details(): metadata */
+PHP_METHOD(Kem, details)
+{
+    php_oqs_kem_obj *o = php_oqs_kem_fetch(Z_OBJ_P(getThis()));
+    if (!o->kem) { RETURN_NULL(); }
+
+    array_init(return_value);
+    add_assoc_string(return_value, "name", (char*)o->kem->method_name);
+    add_assoc_string(return_value, "version", (char*)o->kem->alg_version);
+    add_assoc_long(return_value, "claimed_nist_level", (zend_long)o->kem->claimed_nist_level);
+    add_assoc_bool(return_value, "ind_cca", o->kem->ind_cca);
+    add_assoc_long(return_value, "length_public_key", (zend_long)o->kem->length_public_key);
+    add_assoc_long(return_value, "length_secret_key", (zend_long)o->kem->length_secret_key);
+    add_assoc_long(return_value, "length_ciphertext", (zend_long)o->kem->length_ciphertext);
+    add_assoc_long(return_value, "length_shared_secret", (zend_long)o->kem->length_shared_secret);
+}
+
 /* static array algorithms(): enabled KEM names */
 PHP_METHOD(Kem, algorithms)
 {

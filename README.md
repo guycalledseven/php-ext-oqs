@@ -1,4 +1,4 @@
-# php-oqs: PHP bindings for liboqs
+# php-ext-oqs: PHP bindings for liboqs
 
 <!-- 
 ![alt text](https://github.com/guycalledseven/php-oqs/actions/workflows/ci.yml/badge.svg)
@@ -6,11 +6,11 @@
 
 ![alt text](https://img.shields.io/badge/license-MIT-blue.svg)
 
-The php-oqs extension makes quantum-resistant cryptography accessible in PHP by providing a direct, high-performance wrapper for the C library [liboqs](https://github.com/open-quantum-safe/liboqs/) from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project.
+The php-ext-oqs extension makes quantum-resistant cryptography accessible in PHP by providing a direct, high-performance wrapper for the C library [liboqs](https://github.com/open-quantum-safe/liboqs/) from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project.
 
 It provides an object-oriented API for the NIST-standardized PQC algorithms ML-KEM (Kyber), ML-DSA (Dilithium), SLH-DSA (SPHINCS+), and other algorithms supported by liboqs.
 
-Influenced by [https://github.com/open-quantum-safe/liboqs-python](liboqs-python).
+Influenced and inspired by great [DEF CON 33 - Post Quantum Panic talk by K Karagiannis](https://www.youtube.com/watch?v=OkVYJx1iLNs).
 
 ## Features
 - Key Encapsulation Mechanisms (KEMs): Securely generate and exchange shared secrets using algorithms like ML-KEM.
@@ -37,10 +37,11 @@ Influenced by [https://github.com/open-quantum-safe/liboqs-python](liboqs-python
 
 
 ## Roadmap
-- [ ] Expose Algorithm Details 
+- [x] Expose Algorithm Details 
+- [x] RNG Control 
 - [ ] Implement Dedicated Key Objects?
-- [x] ~~Expose Algorithm Names as Constants~~
-- [x] ~~Add Documentation on KDFs~~
+- [x] Expose Algorithm Names as Constants
+- [x] Add Documentation on KDFs
 
 ## Development Notes
 - Safety: The extension is thread-safe (request-bound) and does not use globals.
@@ -62,7 +63,58 @@ macOS:
 brew install cmake
 ```
 
-### Build liboqs
+
+### Build liboqs for static linking
+
+```bash
+rm -rf liboqs/build
+cmake -S liboqs -B liboqs/build \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DOQS_BUILD_ONLY_LIB=ON \
+  -DOQS_USE_OPENSSL=OFF \
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+cmake --build liboqs/build --parallel
+sudo cmake --build liboqs/build --target install
+```
+
+test
+
+```sh
+test -f /usr/local/lib/liboqs.a || echo "liboqs.a missing"
+ls /usr/local/lib/liboqs*.dylib 2>/dev/null || echo "no dylib present (good)"
+```
+
+build php extension
+
+```sh
+export PKG_CONFIG=/usr/bin/false
+rm -rf build run-tests.php
+phpize
+OQS_COMMIT=$(git -C liboqs rev-parse --short HEAD)
+./configure --with-oqs=/usr/local \
+  CPPFLAGS="-DPHP_OQS_LIB_COMMIT=\\\"$OQS_COMMIT\\\"" \
+  LDFLAGS="-Wl,-force_load,/usr/local/lib/liboqs.a -Wl,-dead_strip -fvisibility=hidden"
+make clean && make -j
+```
+
+confirm if static
+
+```sh
+otool -L modules/oqs.so
+# Expected: does NOT list liboqs.*dylib. Only /usr/lib/libSystem.B.dylib.
+```
+
+```sh
+# debian build flags!
+LDFLAGS="-Wl,--whole-archive,/usr/local/lib/liboqs.a,--no-whole-archive -Wl,--exclude-libs,ALL -fvisibility=hidden"
+```
+
+
+### Build the extension with dynamically linked liboqs (optional)
+
+
+#### Build liboqs
 
 ```bash
 git clone --depth=1 https://github.com/open-quantum-safe/liboqs
@@ -72,8 +124,7 @@ sudo cmake --build liboqs/build --target install
 sudo ldconfig || true
 ```
 
-
-### Build the extension 
+#### Build extension
 
 ```bash
 rm -rf build/* run-tests.php
@@ -84,10 +135,17 @@ phpize
 
 # Debian 
 # ./configure --enable-oqs
+phpize
+OQS_COMMIT=$(git -C /path/to/liboqs rev-parse --short HEAD) \
+./configure --with-oqs=/usr/local
 
 make clean && make -j
+```
 
+### Test and use
 
+```sh
+php -q run_tests.php
 cp modules/oqs.so "$(php -r 'echo ini_get("extension_dir") . "\n";')"
 
 # enable macOS
@@ -102,6 +160,15 @@ sudo phpenmod oqs 2>/dev/null || true
 
 
 # php -r '$f = php_ini_scanned_files(); echo $f ? dirname(explode(",", $f)[0]) . "\n" : "none\n";'
+```
+
+`php -q --info`
+
+test in browser with phpinfo
+
+```sh
+php -S localhost:8000 -t www
+open http://localhost:8000
 ```
 
 macOS config after setup 
@@ -259,6 +326,50 @@ $isValid = $sig->verify($message, $signature, $signingPublicKey);
 
 assert($isValid === true);
 echo "Signature is valid!\n";
+
+```
+
+### 3. Algorithm Details
+
+You can retrieve detailed metadata about an algorithm using the `details()` method.
+
+```php
+$kem = new Oqs\Kem('Kyber512');
+$details = $kem->details();
+print_r($details);
+/* Output:
+Array
+(
+    [name] => Kyber512
+    [version] => ...
+    [claimed_nist_level] => 1
+    [ind_cca] => 1
+    [length_public_key] => 800
+    [length_secret_key] => 1632
+    [length_ciphertext] => 768
+    [length_shared_secret] => 32
+)
+*/
+```
+
+### 4. Random Number Generator (RNG)
+
+You can switch the underlying random number generator used by `liboqs`.
+
+```php
+// Switch to System RNG (default)
+try {
+    Oqs\randombytes_switch_algorithm(Oqs\RAND_ALG_SYSTEM);
+} catch (Oqs\Exception $e) {
+    // Handle error
+}
+
+// Switch to OpenSSL RNG
+try {
+    Oqs\randombytes_switch_algorithm(Oqs\RAND_ALG_OPENSSL);
+} catch (Oqs\Exception $e) {
+    // Handle error (e.g., OpenSSL not supported in liboqs build)
+}
 ```
 
 

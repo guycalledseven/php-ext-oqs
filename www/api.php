@@ -5,13 +5,13 @@ use Oqs\Sig;
 
 $kem = new Kem('ML-KEM-768');
 $s = $kem->sizes();                 // ['pk'=>..,'sk'=>..,'ct'=>..,'ss'=>..]
-[$pk,$sk] = $kem->keypair();        // returns [pk, sk] as binary strings
-[$ct,$ssA] = $kem->encap($pk);      // encaps → [ciphertext, shared_secret]
+[$pk, $sk] = $kem->keypair();        // returns [pk, sk] as binary strings
+[$ct, $ssA] = $kem->encap($pk);      // encaps → [ciphertext, shared_secret]
 $ssB = $kem->decap($ct, $sk);       // decaps → shared_secret
 assert($ssA === $ssB);
 
 $sig = new Sig('ML-DSA-65');
-[$spk,$ssk] = $sig->keypair();
+[$spk, $ssk] = $sig->keypair();
 $signature = $sig->sign("hello", $ssk);
 $ok = $sig->verify("hello", $signature, $spk); // bool
 
@@ -28,18 +28,79 @@ var_dump(bin2hex($signature));
 var_dump($ok);
 
 $kem = new Kem('ML-KEM-768');
-[$pk,$sk] = $kem->keypair();
-[$ct,$ss1] = $kem->encap($pk);
+[$pk, $sk] = $kem->keypair();
+[$ct, $ss1] = $kem->encap($pk);
 $ss2 = $kem->decap($ct, $sk);
 assert(hash_equals($ss1, $ss2));
 
 $sig = new Sig('ML-DSA-65');
-[$spk,$ssk] = $sig->keypair();
+[$spk, $ssk] = $sig->keypair();
 $s = $sig->sign("hello", $ssk);
 assert($sig->verify("hello", $s, $spk) === true);
 
+/**
+ * details test
+ */
 
-// exceptions
+echo "KEM details test" . PHP_EOL;
+
+$kem = new Kem('ML-KEM-768');
+$kDetails = $kem->details();
+
+assert($kDetails['name'] === 'ML-KEM-768');
+assert($kDetails['claimed_nist_level'] === 3);
+assert($kDetails['ind_cca'] === true);
+assert($kDetails['length_public_key'] === 1184);
+
+echo "SIG details test" . PHP_EOL;
+
+$sig = new Sig('ML-DSA-65');
+$sDetails = $sig->details();
+
+assert($sDetails['name'] === 'ML-DSA-65');
+assert($sDetails['claimed_nist_level'] === 3);
+assert($sDetails['euf_cma'] === true);
+assert($sDetails['length_public_key'] === 1952);
+
+
+/**
+ * randombytes_switch_algorithm
+ */
+
+// Try switching to system (should always work)
+try {
+    Oqs\randombytes_switch_algorithm(Oqs\RAND_ALG_SYSTEM);
+    echo "Switched to system\n";
+} catch (Oqs\Exception $e) {
+    echo "Failed to switch to system: " . $e->getMessage() . "\n";
+}
+
+// Try switching to OpenSSL (might fail if liboqs built without OpenSSL)
+try {
+    Oqs\randombytes_switch_algorithm(Oqs\RAND_ALG_OPENSSL);
+    echo "Switched to OpenSSL\n";
+} catch (Oqs\Exception $e) {
+    // If it fails, we just print a message that we can match in EXPECTF or just ignore
+    // But to make test pass on both, we can print "Switched to OpenSSL" if we want to fake it, 
+    // OR better: print "OpenSSL attempt done" and rely on the fact that we caught the exception.
+    // Let's just print "Switched to OpenSSL" if successful, or "OpenSSL not available" if failed.
+    echo "OpenSSL not available\n";
+}
+
+// Switch back to system
+try {
+    Oqs\randombytes_switch_algorithm(Oqs\RAND_ALG_SYSTEM);
+    echo "Switched back to system\n";
+} catch (Oqs\Exception $e) {
+    echo "Failed to switch back to system: " . $e->getMessage() . "\n";
+}
+
+
+
+
+/**
+ * exceptions
+ */
 
 echo "Exception test" . PHP_EOL;
 
@@ -59,8 +120,9 @@ try {
 }
 
 
-
-// constants for algo names
+/**
+ * constants for algo names
+ */
 
 echo "Constants test" . PHP_EOL;
 
