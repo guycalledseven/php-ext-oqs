@@ -38,15 +38,15 @@ Influenced and inspired by great [DEF CON 33 - Post Quantum Panic talk by K Kara
 
 ## Roadmap
 - [x] Expose Algorithm Details 
-- [x] RNG Control 
 - [ ] Implement Dedicated Key Objects?
 - [x] Expose Algorithm Names as Constants
 - [x] Add Documentation on KDFs
 
 ## Development Notes
-- Safety: The extension is thread-safe (request-bound) and does not use globals.
+- Safety: The extension has no module globals and no per-request state; the only state is the liboqs handle owned by each `Oqs\Kem` / `Oqs\Sig` object.
+- Input validation: keys and ciphertexts of the wrong length are rejected with `Oqs\Exception` before they reach liboqs. `Sig::verify()` returns `false` for a signature of impossible length.
 - Output Format: All cryptographic outputs (keys, ciphertexts, signatures) are returned as raw binary strings.
-- liboqs Version: This extension is developed and tested against the main branch of liboqs. Built against Oct 2025 commit 52169a1edfaf8b5f1593ef3a002e2553f33271a0. It is recommended to use a recent version of the library.
+- liboqs Version: developed and tested against liboqs release **0.16.0**. The set of `ALG_*` constants follows whatever the linked liboqs enables, so it changes between liboqs releases (0.16.0 dropped the `SPHINCS+-*` names in favour of `SLH-DSA`, and added HQC, eFrodoKEM and MQOM). See [CHANGELOG.md](CHANGELOG.md).
 
 
 ## Installation
@@ -66,37 +66,31 @@ brew install cmake
 
 ### Build liboqs for static linking
 
+Install liboqs into a prefix **outside** this directory. `make clean` deletes every `*.a` below the extension directory, which would silently remove a liboqs installed inside it.
+
 ```bash
-rm -rf liboqs/build
+git clone --depth=1 --branch 0.16.0 https://github.com/open-quantum-safe/liboqs
+OQS_PREFIX="$(cd .. && pwd)/deps/liboqs-0.16.0"    # or /usr/local (then install with sudo)
 cmake -S liboqs -B liboqs/build \
   -DCMAKE_BUILD_TYPE=Release \
   -DBUILD_SHARED_LIBS=OFF \
   -DOQS_BUILD_ONLY_LIB=ON \
   -DOQS_USE_OPENSSL=OFF \
-  -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+  -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+  -DCMAKE_INSTALL_PREFIX="$OQS_PREFIX"
 cmake --build liboqs/build --parallel
-sudo cmake --build liboqs/build --target install
-```
-
-test
-
-```sh
-test -f /usr/local/lib/liboqs.a || echo "liboqs.a missing"
-ls /usr/local/lib/liboqs*.dylib 2>/dev/null || echo "no dylib present (good)"
+cmake --install liboqs/build
 ```
 
 build php extension
 
 ```sh
-export PKG_CONFIG=/usr/bin/false
-rm -rf build run-tests.php
-phpize
-OQS_COMMIT=$(git -C liboqs rev-parse --short HEAD)
-./configure --with-oqs=/usr/local \
-  CPPFLAGS="-DPHP_OQS_LIB_COMMIT=\\\"$OQS_COMMIT\\\"" \
-  LDFLAGS="-Wl,-force_load,/usr/local/lib/liboqs.a -Wl,-dead_strip -fvisibility=hidden"
+phpize --clean; phpize
+OQS_COMMIT=$(git -C liboqs rev-parse --short HEAD) ./configure --with-oqs="$OQS_PREFIX"
 make clean && make -j
 ```
+
+An explicit `--with-oqs=DIR` always wins over pkg-config. If `DIR/lib/liboqs.a` exists it is linked statically (`-force_load` on macOS, `--whole-archive` on Linux); configure fails if `DIR` contains no liboqs at all.
 
 confirm if static
 
@@ -105,9 +99,10 @@ otool -L modules/oqs.so
 # Expected: does NOT list liboqs.*dylib. Only /usr/lib/libSystem.B.dylib.
 ```
 
+Check which liboqs actually got linked (headers and library versions must agree):
+
 ```sh
-# debian build flags!
-LDFLAGS="-Wl,--whole-archive,/usr/local/lib/liboqs.a,--no-whole-archive -Wl,--exclude-libs,ALL -fvisibility=hidden"
+php -d extension=$PWD/modules/oqs.so --ri oqs | grep liboqs
 ```
 
 
@@ -145,7 +140,8 @@ make clean && make -j
 ### Test and use
 
 ```sh
-php -q run_tests.php
+NO_INTERACTION=1 make test                                 # all tests
+NO_INTERACTION=1 make test TESTS=tests/001-basic.phpt     # a single test
 cp modules/oqs.so "$(php -r 'echo ini_get("extension_dir") . "\n";')"
 
 # enable macOS
@@ -352,28 +348,6 @@ Array
 */
 ```
 
-### 4. Random Number Generator (RNG)
-
-You can switch the underlying random number generator used by `liboqs`.
-
-```php
-// Switch to System RNG (default)
-try {
-    Oqs\randombytes_switch_algorithm(Oqs\RAND_ALG_SYSTEM);
-} catch (Oqs\Exception $e) {
-    // Handle error
-}
-
-// Switch to OpenSSL RNG
-try {
-    Oqs\randombytes_switch_algorithm(Oqs\RAND_ALG_OPENSSL);
-} catch (Oqs\Exception $e) {
-    // Handle error (e.g., OpenSSL not supported in liboqs build)
-}
-```
-
-
-
 ### PHP API test
 
 ```php
@@ -427,9 +401,9 @@ These constants provide version information for the underlying `liboqs` C librar
 | Constant Name | Value |
 |---------------|-------|
 | `Oqs\VERSION_MAJOR` | `0` |
-| `Oqs\VERSION_MINOR` | `14` |
-| `Oqs\VERSION_PATCH` | `1` |
-| `Oqs\VERSION_TEXT` | `0.14.1-dev` |
+| `Oqs\VERSION_MINOR` | `16` |
+| `Oqs\VERSION_PATCH` | `0` |
+| `Oqs\VERSION_TEXT` | `0.16.0` |
 
 ### `Oqs\Kem` Constants
 
@@ -448,12 +422,21 @@ These constants provide version information for the underlying `liboqs` C librar
 | `ALG_CLASSIC_MCELIECE_6960119F` | `Classic-McEliece-6960119f` |
 | `ALG_CLASSIC_MCELIECE_8192128` | `Classic-McEliece-8192128` |
 | `ALG_CLASSIC_MCELIECE_8192128F` | `Classic-McEliece-8192128f` |
+| `ALG_EFRODOKEM_1344_AES` | `eFrodoKEM-1344-AES` |
+| `ALG_EFRODOKEM_1344_SHAKE` | `eFrodoKEM-1344-SHAKE` |
+| `ALG_EFRODOKEM_640_AES` | `eFrodoKEM-640-AES` |
+| `ALG_EFRODOKEM_640_SHAKE` | `eFrodoKEM-640-SHAKE` |
+| `ALG_EFRODOKEM_976_AES` | `eFrodoKEM-976-AES` |
+| `ALG_EFRODOKEM_976_SHAKE` | `eFrodoKEM-976-SHAKE` |
 | `ALG_FRODOKEM_1344_AES` | `FrodoKEM-1344-AES` |
 | `ALG_FRODOKEM_1344_SHAKE` | `FrodoKEM-1344-SHAKE` |
 | `ALG_FRODOKEM_640_AES` | `FrodoKEM-640-AES` |
 | `ALG_FRODOKEM_640_SHAKE` | `FrodoKEM-640-SHAKE` |
 | `ALG_FRODOKEM_976_AES` | `FrodoKEM-976-AES` |
 | `ALG_FRODOKEM_976_SHAKE` | `FrodoKEM-976-SHAKE` |
+| `ALG_HQC_1` | `HQC-1` |
+| `ALG_HQC_3` | `HQC-3` |
+| `ALG_HQC_5` | `HQC-5` |
 | `ALG_KYBER1024` | `Kyber1024` |
 | `ALG_KYBER512` | `Kyber512` |
 | `ALG_KYBER768` | `Kyber768` |
@@ -501,6 +484,18 @@ These constants provide version information for the underlying `liboqs` C librar
 | `ALG_ML_DSA_44` | `ML-DSA-44` |
 | `ALG_ML_DSA_65` | `ML-DSA-65` |
 | `ALG_ML_DSA_87` | `ML-DSA-87` |
+| `ALG_MQOM2_CAT1_GF16_FAST_R3` | `mqom2_cat1_gf16_fast_r3` |
+| `ALG_MQOM2_CAT1_GF16_FAST_R5` | `mqom2_cat1_gf16_fast_r5` |
+| `ALG_MQOM2_CAT1_GF16_SHORT_R3` | `mqom2_cat1_gf16_short_r3` |
+| `ALG_MQOM2_CAT1_GF16_SHORT_R5` | `mqom2_cat1_gf16_short_r5` |
+| `ALG_MQOM2_CAT3_GF16_FAST_R3` | `mqom2_cat3_gf16_fast_r3` |
+| `ALG_MQOM2_CAT3_GF16_FAST_R5` | `mqom2_cat3_gf16_fast_r5` |
+| `ALG_MQOM2_CAT3_GF16_SHORT_R3` | `mqom2_cat3_gf16_short_r3` |
+| `ALG_MQOM2_CAT3_GF16_SHORT_R5` | `mqom2_cat3_gf16_short_r5` |
+| `ALG_MQOM2_CAT5_GF16_FAST_R3` | `mqom2_cat5_gf16_fast_r3` |
+| `ALG_MQOM2_CAT5_GF16_FAST_R5` | `mqom2_cat5_gf16_fast_r5` |
+| `ALG_MQOM2_CAT5_GF16_SHORT_R3` | `mqom2_cat5_gf16_short_r3` |
+| `ALG_MQOM2_CAT5_GF16_SHORT_R5` | `mqom2_cat5_gf16_short_r5` |
 | `ALG_OV_III` | `OV-III` |
 | `ALG_OV_III_PKC` | `OV-III-pkc` |
 | `ALG_OV_III_PKC_SKC` | `OV-III-pkc-skc` |
@@ -681,16 +676,4 @@ These constants provide version information for the underlying `liboqs` C librar
 | `ALG_SNOVA_49_11_3` | `SNOVA_49_11_3` |
 | `ALG_SNOVA_56_25_2` | `SNOVA_56_25_2` |
 | `ALG_SNOVA_60_10_4` | `SNOVA_60_10_4` |
-| `ALG_SPHINCS__SHA2_128F_SIMPLE` | `SPHINCS+-SHA2-128f-simple` |
-| `ALG_SPHINCS__SHA2_128S_SIMPLE` | `SPHINCS+-SHA2-128s-simple` |
-| `ALG_SPHINCS__SHA2_192F_SIMPLE` | `SPHINCS+-SHA2-192f-simple` |
-| `ALG_SPHINCS__SHA2_192S_SIMPLE` | `SPHINCS+-SHA2-192s-simple` |
-| `ALG_SPHINCS__SHA2_256F_SIMPLE` | `SPHINCS+-SHA2-256f-simple` |
-| `ALG_SPHINCS__SHA2_256S_SIMPLE` | `SPHINCS+-SHA2-256s-simple` |
-| `ALG_SPHINCS__SHAKE_128F_SIMPLE` | `SPHINCS+-SHAKE-128f-simple` |
-| `ALG_SPHINCS__SHAKE_128S_SIMPLE` | `SPHINCS+-SHAKE-128s-simple` |
-| `ALG_SPHINCS__SHAKE_192F_SIMPLE` | `SPHINCS+-SHAKE-192f-simple` |
-| `ALG_SPHINCS__SHAKE_192S_SIMPLE` | `SPHINCS+-SHAKE-192s-simple` |
-| `ALG_SPHINCS__SHAKE_256F_SIMPLE` | `SPHINCS+-SHAKE-256f-simple` |
-| `ALG_SPHINCS__SHAKE_256S_SIMPLE` | `SPHINCS+-SHAKE-256s-simple` |
 

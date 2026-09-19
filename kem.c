@@ -38,6 +38,7 @@ PHP_METHOD(Kem, keypair)
     zend_string *sk = zend_string_alloc(o->kem->length_secret_key, 0);
 
     if (OQS_KEM_keypair(o->kem, (uint8_t*)ZSTR_VAL(pk), (uint8_t*)ZSTR_VAL(sk)) != OQS_SUCCESS) {
+        memwipe(ZSTR_VAL(sk), ZSTR_LEN(sk));
         zend_string_release(pk); zend_string_release(sk);
         zend_throw_exception(oqs_ce_exc, "KEM keypair failed", 0);
         return;
@@ -60,6 +61,7 @@ PHP_METHOD(Kem, encap)
     ZEND_PARSE_PARAMETERS_END();
 
     if (!o->kem) { zend_throw_exception(oqs_ce_exc, "KEM not initialized", 0); return; }
+    if (!php_oqs_check_len("public key", ZSTR_LEN(pk), o->kem->length_public_key)) { return; }
 
     zend_string *ct = zend_string_alloc(o->kem->length_ciphertext, 0);
     zend_string *ss = zend_string_alloc(o->kem->length_shared_secret, 0);
@@ -92,6 +94,8 @@ PHP_METHOD(Kem, decap)
     ZEND_PARSE_PARAMETERS_END();
 
     if (!o->kem) { zend_throw_exception(oqs_ce_exc, "KEM not initialized", 0); return; }
+    if (!php_oqs_check_len("ciphertext", ZSTR_LEN(ct), o->kem->length_ciphertext)) { return; }
+    if (!php_oqs_check_len("secret key", ZSTR_LEN(sk), o->kem->length_secret_key)) { return; }
 
     zend_string *ss = zend_string_alloc(o->kem->length_shared_secret, 0);
     if (OQS_KEM_decaps(o->kem,

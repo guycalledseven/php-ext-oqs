@@ -10,23 +10,15 @@ namespace Oqs;
 const VERSION_MAJOR = 0;
 
 /** @var integer Version information from the underlying liboqs library. */
-const VERSION_MINOR = 14;
+const VERSION_MINOR = 16;
 
 /** @var integer Version information from the underlying liboqs library. */
-const VERSION_PATCH = 1;
+const VERSION_PATCH = 0;
 
 /** @var string Version information from the underlying liboqs library. */
-const VERSION_TEXT = '0.14.1-dev';
+const VERSION_TEXT = '0.16.0';
 
-/** @var string System random number generator. */
-const RAND_ALG_SYSTEM = 'system';
-
-/** @var string OpenSSL random number generator. */
-const RAND_ALG_OPENSSL = 'OpenSSL';
-
-class Exception extends \Exception
-{
-}
+class Exception extends \Exception {}
 
 final class Kem
 {
@@ -69,6 +61,24 @@ final class Kem
     /** @var string The "Classic-McEliece-8192128f" algorithm. */
     public const ALG_CLASSIC_MCELIECE_8192128F = 'Classic-McEliece-8192128f';
 
+    /** @var string The "eFrodoKEM-1344-AES" algorithm. */
+    public const ALG_EFRODOKEM_1344_AES = 'eFrodoKEM-1344-AES';
+
+    /** @var string The "eFrodoKEM-1344-SHAKE" algorithm. */
+    public const ALG_EFRODOKEM_1344_SHAKE = 'eFrodoKEM-1344-SHAKE';
+
+    /** @var string The "eFrodoKEM-640-AES" algorithm. */
+    public const ALG_EFRODOKEM_640_AES = 'eFrodoKEM-640-AES';
+
+    /** @var string The "eFrodoKEM-640-SHAKE" algorithm. */
+    public const ALG_EFRODOKEM_640_SHAKE = 'eFrodoKEM-640-SHAKE';
+
+    /** @var string The "eFrodoKEM-976-AES" algorithm. */
+    public const ALG_EFRODOKEM_976_AES = 'eFrodoKEM-976-AES';
+
+    /** @var string The "eFrodoKEM-976-SHAKE" algorithm. */
+    public const ALG_EFRODOKEM_976_SHAKE = 'eFrodoKEM-976-SHAKE';
+
     /** @var string The "FrodoKEM-1344-AES" algorithm. */
     public const ALG_FRODOKEM_1344_AES = 'FrodoKEM-1344-AES';
 
@@ -86,6 +96,15 @@ final class Kem
 
     /** @var string The "FrodoKEM-976-SHAKE" algorithm. */
     public const ALG_FRODOKEM_976_SHAKE = 'FrodoKEM-976-SHAKE';
+
+    /** @var string The "HQC-1" algorithm. */
+    public const ALG_HQC_1 = 'HQC-1';
+
+    /** @var string The "HQC-3" algorithm. */
+    public const ALG_HQC_3 = 'HQC-3';
+
+    /** @var string The "HQC-5" algorithm. */
+    public const ALG_HQC_5 = 'HQC-5';
 
     /** @var string The "Kyber1024" algorithm. */
     public const ALG_KYBER1024 = 'Kyber1024';
@@ -129,54 +148,40 @@ final class Kem
     /**
      * @param string $algorithm
      */
-    public function __construct(string $algorithm)
-    {
-    }
+    public function __construct(string $algorithm) {}
 
     /**
      * @return array
      */
-    public function sizes(): array
-    {
-    }
+    public function sizes(): array {}
 
     /**
      * @return array
      */
-    public function keypair(): array
-    {
-    }
+    public function keypair(): array {}
 
     /**
      * @param string $publicKey
      * @return array
      */
-    public function encap(string $publicKey): array
-    {
-    }
+    public function encap(string $publicKey): array {}
 
     /**
      * @param string $ciphertext
      * @param string $secretKey
      * @return string
      */
-    public function decap(string $ciphertext, string $secretKey): string
-    {
-    }
+    public function decap(string $ciphertext, string $secretKey): string {}
 
     /**
      * @return array
      */
-    public function details(): array
-    {
-    }
+    public function details(): array {}
 
     /**
      * @return array
      */
-    public static function algorithms(): array
-    {
-    }
+    public static function algorithms(): array {}
 
 }
 final class Sig
@@ -267,6 +272,42 @@ final class Sig
 
     /** @var string The "ML-DSA-87" algorithm. */
     public const ALG_ML_DSA_87 = 'ML-DSA-87';
+
+    /** @var string The "mqom2_cat1_gf16_fast_r3" algorithm. */
+    public const ALG_MQOM2_CAT1_GF16_FAST_R3 = 'mqom2_cat1_gf16_fast_r3';
+
+    /** @var string The "mqom2_cat1_gf16_fast_r5" algorithm. */
+    public const ALG_MQOM2_CAT1_GF16_FAST_R5 = 'mqom2_cat1_gf16_fast_r5';
+
+    /** @var string The "mqom2_cat1_gf16_short_r3" algorithm. */
+    public const ALG_MQOM2_CAT1_GF16_SHORT_R3 = 'mqom2_cat1_gf16_short_r3';
+
+    /** @var string The "mqom2_cat1_gf16_short_r5" algorithm. */
+    public const ALG_MQOM2_CAT1_GF16_SHORT_R5 = 'mqom2_cat1_gf16_short_r5';
+
+    /** @var string The "mqom2_cat3_gf16_fast_r3" algorithm. */
+    public const ALG_MQOM2_CAT3_GF16_FAST_R3 = 'mqom2_cat3_gf16_fast_r3';
+
+    /** @var string The "mqom2_cat3_gf16_fast_r5" algorithm. */
+    public const ALG_MQOM2_CAT3_GF16_FAST_R5 = 'mqom2_cat3_gf16_fast_r5';
+
+    /** @var string The "mqom2_cat3_gf16_short_r3" algorithm. */
+    public const ALG_MQOM2_CAT3_GF16_SHORT_R3 = 'mqom2_cat3_gf16_short_r3';
+
+    /** @var string The "mqom2_cat3_gf16_short_r5" algorithm. */
+    public const ALG_MQOM2_CAT3_GF16_SHORT_R5 = 'mqom2_cat3_gf16_short_r5';
+
+    /** @var string The "mqom2_cat5_gf16_fast_r3" algorithm. */
+    public const ALG_MQOM2_CAT5_GF16_FAST_R3 = 'mqom2_cat5_gf16_fast_r3';
+
+    /** @var string The "mqom2_cat5_gf16_fast_r5" algorithm. */
+    public const ALG_MQOM2_CAT5_GF16_FAST_R5 = 'mqom2_cat5_gf16_fast_r5';
+
+    /** @var string The "mqom2_cat5_gf16_short_r3" algorithm. */
+    public const ALG_MQOM2_CAT5_GF16_SHORT_R3 = 'mqom2_cat5_gf16_short_r3';
+
+    /** @var string The "mqom2_cat5_gf16_short_r5" algorithm. */
+    public const ALG_MQOM2_CAT5_GF16_SHORT_R5 = 'mqom2_cat5_gf16_short_r5';
 
     /** @var string The "OV-III" algorithm. */
     public const ALG_OV_III = 'OV-III';
@@ -808,64 +849,22 @@ final class Sig
     /** @var string The "SNOVA_60_10_4" algorithm. */
     public const ALG_SNOVA_60_10_4 = 'SNOVA_60_10_4';
 
-    /** @var string The "SPHINCS+-SHA2-128f-simple" algorithm. */
-    public const ALG_SPHINCS__SHA2_128F_SIMPLE = 'SPHINCS+-SHA2-128f-simple';
-
-    /** @var string The "SPHINCS+-SHA2-128s-simple" algorithm. */
-    public const ALG_SPHINCS__SHA2_128S_SIMPLE = 'SPHINCS+-SHA2-128s-simple';
-
-    /** @var string The "SPHINCS+-SHA2-192f-simple" algorithm. */
-    public const ALG_SPHINCS__SHA2_192F_SIMPLE = 'SPHINCS+-SHA2-192f-simple';
-
-    /** @var string The "SPHINCS+-SHA2-192s-simple" algorithm. */
-    public const ALG_SPHINCS__SHA2_192S_SIMPLE = 'SPHINCS+-SHA2-192s-simple';
-
-    /** @var string The "SPHINCS+-SHA2-256f-simple" algorithm. */
-    public const ALG_SPHINCS__SHA2_256F_SIMPLE = 'SPHINCS+-SHA2-256f-simple';
-
-    /** @var string The "SPHINCS+-SHA2-256s-simple" algorithm. */
-    public const ALG_SPHINCS__SHA2_256S_SIMPLE = 'SPHINCS+-SHA2-256s-simple';
-
-    /** @var string The "SPHINCS+-SHAKE-128f-simple" algorithm. */
-    public const ALG_SPHINCS__SHAKE_128F_SIMPLE = 'SPHINCS+-SHAKE-128f-simple';
-
-    /** @var string The "SPHINCS+-SHAKE-128s-simple" algorithm. */
-    public const ALG_SPHINCS__SHAKE_128S_SIMPLE = 'SPHINCS+-SHAKE-128s-simple';
-
-    /** @var string The "SPHINCS+-SHAKE-192f-simple" algorithm. */
-    public const ALG_SPHINCS__SHAKE_192F_SIMPLE = 'SPHINCS+-SHAKE-192f-simple';
-
-    /** @var string The "SPHINCS+-SHAKE-192s-simple" algorithm. */
-    public const ALG_SPHINCS__SHAKE_192S_SIMPLE = 'SPHINCS+-SHAKE-192s-simple';
-
-    /** @var string The "SPHINCS+-SHAKE-256f-simple" algorithm. */
-    public const ALG_SPHINCS__SHAKE_256F_SIMPLE = 'SPHINCS+-SHAKE-256f-simple';
-
-    /** @var string The "SPHINCS+-SHAKE-256s-simple" algorithm. */
-    public const ALG_SPHINCS__SHAKE_256S_SIMPLE = 'SPHINCS+-SHAKE-256s-simple';
-
     /**
      * @param string $algorithm
      */
-    public function __construct(string $algorithm)
-    {
-    }
+    public function __construct(string $algorithm) {}
 
     /**
      * @return array
      */
-    public function keypair(): array
-    {
-    }
+    public function keypair(): array {}
 
     /**
      * @param string $message
      * @param string $secretKey
      * @return string
      */
-    public function sign(string $message, string $secretKey): string
-    {
-    }
+    public function sign(string $message, string $secretKey): string {}
 
     /**
      * @param string $message
@@ -873,30 +872,16 @@ final class Sig
      * @param string $publicKey
      * @return bool
      */
-    public function verify(string $message, string $signature, string $publicKey): bool
-    {
-    }
+    public function verify(string $message, string $signature, string $publicKey): bool {}
 
     /**
      * @return array
      */
-    public function details(): array
-    {
-    }
+    public function details(): array {}
 
     /**
      * @return array
      */
-    public static function algorithms(): array
-    {
-    }
+    public static function algorithms(): array {}
 
-}
-
-/**
- * @param string $algorithm
- * @return void
- */
-function randombytes_switch_algorithm(string $algorithm): void
-{
 }

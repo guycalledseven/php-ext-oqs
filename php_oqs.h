@@ -1,6 +1,10 @@
 #ifndef PHP_OQS_H
 #define PHP_OQS_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "php.h"
 #include "zend_exceptions.h"
 #include <oqs/oqs.h>
@@ -11,7 +15,8 @@ extern zend_module_entry oqs_module_entry;
 #define PHP_OQS_NS "Oqs"
 
 #define PHP_OQS_VERSION "0.1.0"
-#define PHP_OQS_LIB_VERSION "liboqs 0.11.0"
+/* version of the liboqs headers this extension was compiled against */
+#define PHP_OQS_LIB_VERSION "liboqs " OQS_VERSION_TEXT
 #ifndef PHP_OQS_LIB_COMMIT
 #define PHP_OQS_LIB_COMMIT "unknown"
 #endif
@@ -43,6 +48,20 @@ static inline void memwipe(void *p, size_t n) {
   volatile unsigned char *v = (volatile unsigned char *)p;
   while (n--)
     *v++ = 0;
+}
+
+/* liboqs reads fixed-size keys/ciphertexts without a length argument, so every
+ * such input must be length-checked before it is passed down.
+ * Throws Oqs\Exception and returns 0 on mismatch. */
+static inline int php_oqs_check_len(const char *what, size_t got,
+                                    size_t expected) {
+  if (got != expected) {
+    zend_throw_exception_ex(oqs_ce_exc, 0,
+                            "Invalid %s length: expected %zu bytes, got %zu",
+                            what, expected, got);
+    return 0;
+  }
+  return 1;
 }
 
 #endif

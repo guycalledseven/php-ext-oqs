@@ -5,9 +5,9 @@ These constants provide version information for the underlying `liboqs` C librar
 | Constant Name | Value |
 |---------------|-------|
 | `Oqs\VERSION_MAJOR` | `0` |
-| `Oqs\VERSION_MINOR` | `14` |
-| `Oqs\VERSION_PATCH` | `1` |
-| `Oqs\VERSION_TEXT` | `0.14.1-dev` |
+| `Oqs\VERSION_MINOR` | `16` |
+| `Oqs\VERSION_PATCH` | `0` |
+| `Oqs\VERSION_TEXT` | `0.16.0` |
 
 ### `Oqs\Kem` Constants
 
@@ -26,12 +26,21 @@ These constants provide version information for the underlying `liboqs` C librar
 | `ALG_CLASSIC_MCELIECE_6960119F` | `Classic-McEliece-6960119f` |
 | `ALG_CLASSIC_MCELIECE_8192128` | `Classic-McEliece-8192128` |
 | `ALG_CLASSIC_MCELIECE_8192128F` | `Classic-McEliece-8192128f` |
+| `ALG_EFRODOKEM_1344_AES` | `eFrodoKEM-1344-AES` |
+| `ALG_EFRODOKEM_1344_SHAKE` | `eFrodoKEM-1344-SHAKE` |
+| `ALG_EFRODOKEM_640_AES` | `eFrodoKEM-640-AES` |
+| `ALG_EFRODOKEM_640_SHAKE` | `eFrodoKEM-640-SHAKE` |
+| `ALG_EFRODOKEM_976_AES` | `eFrodoKEM-976-AES` |
+| `ALG_EFRODOKEM_976_SHAKE` | `eFrodoKEM-976-SHAKE` |
 | `ALG_FRODOKEM_1344_AES` | `FrodoKEM-1344-AES` |
 | `ALG_FRODOKEM_1344_SHAKE` | `FrodoKEM-1344-SHAKE` |
 | `ALG_FRODOKEM_640_AES` | `FrodoKEM-640-AES` |
 | `ALG_FRODOKEM_640_SHAKE` | `FrodoKEM-640-SHAKE` |
 | `ALG_FRODOKEM_976_AES` | `FrodoKEM-976-AES` |
 | `ALG_FRODOKEM_976_SHAKE` | `FrodoKEM-976-SHAKE` |
+| `ALG_HQC_1` | `HQC-1` |
+| `ALG_HQC_3` | `HQC-3` |
+| `ALG_HQC_5` | `HQC-5` |
 | `ALG_KYBER1024` | `Kyber1024` |
 | `ALG_KYBER512` | `Kyber512` |
 | `ALG_KYBER768` | `Kyber768` |
@@ -79,6 +88,18 @@ These constants provide version information for the underlying `liboqs` C librar
 | `ALG_ML_DSA_44` | `ML-DSA-44` |
 | `ALG_ML_DSA_65` | `ML-DSA-65` |
 | `ALG_ML_DSA_87` | `ML-DSA-87` |
+| `ALG_MQOM2_CAT1_GF16_FAST_R3` | `mqom2_cat1_gf16_fast_r3` |
+| `ALG_MQOM2_CAT1_GF16_FAST_R5` | `mqom2_cat1_gf16_fast_r5` |
+| `ALG_MQOM2_CAT1_GF16_SHORT_R3` | `mqom2_cat1_gf16_short_r3` |
+| `ALG_MQOM2_CAT1_GF16_SHORT_R5` | `mqom2_cat1_gf16_short_r5` |
+| `ALG_MQOM2_CAT3_GF16_FAST_R3` | `mqom2_cat3_gf16_fast_r3` |
+| `ALG_MQOM2_CAT3_GF16_FAST_R5` | `mqom2_cat3_gf16_fast_r5` |
+| `ALG_MQOM2_CAT3_GF16_SHORT_R3` | `mqom2_cat3_gf16_short_r3` |
+| `ALG_MQOM2_CAT3_GF16_SHORT_R5` | `mqom2_cat3_gf16_short_r5` |
+| `ALG_MQOM2_CAT5_GF16_FAST_R3` | `mqom2_cat5_gf16_fast_r3` |
+| `ALG_MQOM2_CAT5_GF16_FAST_R5` | `mqom2_cat5_gf16_fast_r5` |
+| `ALG_MQOM2_CAT5_GF16_SHORT_R3` | `mqom2_cat5_gf16_short_r3` |
+| `ALG_MQOM2_CAT5_GF16_SHORT_R5` | `mqom2_cat5_gf16_short_r5` |
 | `ALG_OV_III` | `OV-III` |
 | `ALG_OV_III_PKC` | `OV-III-pkc` |
 | `ALG_OV_III_PKC_SKC` | `OV-III-pkc-skc` |
@@ -259,16 +280,4 @@ These constants provide version information for the underlying `liboqs` C librar
 | `ALG_SNOVA_49_11_3` | `SNOVA_49_11_3` |
 | `ALG_SNOVA_56_25_2` | `SNOVA_56_25_2` |
 | `ALG_SNOVA_60_10_4` | `SNOVA_60_10_4` |
-| `ALG_SPHINCS__SHA2_128F_SIMPLE` | `SPHINCS+-SHA2-128f-simple` |
-| `ALG_SPHINCS__SHA2_128S_SIMPLE` | `SPHINCS+-SHA2-128s-simple` |
-| `ALG_SPHINCS__SHA2_192F_SIMPLE` | `SPHINCS+-SHA2-192f-simple` |
-| `ALG_SPHINCS__SHA2_192S_SIMPLE` | `SPHINCS+-SHA2-192s-simple` |
-| `ALG_SPHINCS__SHA2_256F_SIMPLE` | `SPHINCS+-SHA2-256f-simple` |
-| `ALG_SPHINCS__SHA2_256S_SIMPLE` | `SPHINCS+-SHA2-256s-simple` |
-| `ALG_SPHINCS__SHAKE_128F_SIMPLE` | `SPHINCS+-SHAKE-128f-simple` |
-| `ALG_SPHINCS__SHAKE_128S_SIMPLE` | `SPHINCS+-SHAKE-128s-simple` |
-| `ALG_SPHINCS__SHAKE_192F_SIMPLE` | `SPHINCS+-SHAKE-192f-simple` |
-| `ALG_SPHINCS__SHAKE_192S_SIMPLE` | `SPHINCS+-SHAKE-192s-simple` |
-| `ALG_SPHINCS__SHAKE_256F_SIMPLE` | `SPHINCS+-SHAKE-256f-simple` |
-| `ALG_SPHINCS__SHAKE_256S_SIMPLE` | `SPHINCS+-SHAKE-256s-simple` |
 

@@ -28,6 +28,7 @@ PHP_METHOD(Sig, keypair) {
   zend_string *sk = zend_string_alloc(o->sig->length_secret_key, 0);
   if (OQS_SIG_keypair(o->sig, (uint8_t *)ZSTR_VAL(pk),
                       (uint8_t *)ZSTR_VAL(sk)) != OQS_SUCCESS) {
+    memwipe(ZSTR_VAL(sk), ZSTR_LEN(sk));
     zend_string_release(pk);
     zend_string_release(sk);
     zend_throw_exception(oqs_ce_exc, "sig keypair failed", 0);
@@ -55,6 +56,11 @@ PHP_METHOD(Sig, sign) {
     return;
   }
 
+  if (!php_oqs_check_len("secret key", ZSTR_LEN(sk),
+                         o->sig->length_secret_key)) {
+    return;
+  }
+
   const size_t max_len = o->sig->length_signature;
   zend_string *sig = zend_string_alloc(max_len, 0); // non-persistent
   size_t siglen = 0;
@@ -62,6 +68,7 @@ PHP_METHOD(Sig, sign) {
   if (OQS_SIG_sign(o->sig, (uint8_t *)ZSTR_VAL(sig), &siglen,
                    (const uint8_t *)ZSTR_VAL(msg), ZSTR_LEN(msg),
                    (const uint8_t *)ZSTR_VAL(sk)) != OQS_SUCCESS) {
+    memwipe(ZSTR_VAL(sig), ZSTR_LEN(sig));
     zend_string_release(sig);
     zend_throw_exception(oqs_ce_exc, "sign failed", 0);
     return;
@@ -91,6 +98,15 @@ PHP_METHOD(Sig, verify) {
   if (!o->sig) {
     zend_throw_exception(oqs_ce_exc, "SIG not initialized", 0);
     return;
+  }
+
+  if (!php_oqs_check_len("public key", ZSTR_LEN(pk),
+                         o->sig->length_public_key)) {
+    return;
+  }
+  /* signatures may be shorter than the maximum (e.g. Falcon), never longer */
+  if (ZSTR_LEN(sig) > o->sig->length_signature) {
+    RETURN_FALSE;
   }
 
   int rc = OQS_SIG_verify(o->sig, (const uint8_t *)ZSTR_VAL(msg), ZSTR_LEN(msg),

@@ -5,7 +5,6 @@
 
 #include "Zend/zend_smart_string.h"
 #include "oqs/oqs.h"
-#include "oqs/rand.h"
 
 /* Manual declarations to avoid header issues */
 void php_info_print_table_start(void);
@@ -248,11 +247,6 @@ PHP_MINIT_FUNCTION(oqs) {
   REGISTER_STRING_CONSTANT("OQS_LIB_COMMIT", PHP_OQS_LIB_COMMIT,
                            CONST_CS | CONST_PERSISTENT);
 
-  REGISTER_STRING_CONSTANT("OQS\\RAND_ALG_SYSTEM", "system",
-                           CONST_CS | CONST_PERSISTENT);
-  REGISTER_STRING_CONSTANT("OQS\\RAND_ALG_OPENSSL", "OpenSSL",
-                           CONST_CS | CONST_PERSISTENT);
-
   return SUCCESS;
 }
 
@@ -260,7 +254,8 @@ PHP_MINFO_FUNCTION(oqs) {
   php_info_print_table_start();
   php_info_print_table_header(2, "oqs support", "enabled");
   php_info_print_table_row(2, "extension version", PHP_OQS_VERSION);
-  php_info_print_table_row(2, "linked liboqs version", PHP_OQS_LIB_VERSION);
+  php_info_print_table_row(2, "liboqs headers version", OQS_VERSION_TEXT);
+  php_info_print_table_row(2, "liboqs library version", OQS_version());
   php_info_print_table_row(2, "liboqs commit", PHP_OQS_LIB_COMMIT);
 
   // Build KEM list
@@ -290,31 +285,9 @@ PHP_MINFO_FUNCTION(oqs) {
   php_info_print_table_end();
 }
 
-/* Oqs\randombytes_switch_algorithm(string $algorithm) */
-PHP_FUNCTION(randombytes_switch_algorithm) {
-  char *alg;
-  size_t alg_len;
-  ZEND_PARSE_PARAMETERS_START(1, 1)
-  Z_PARAM_STRING(alg, alg_len)
-  ZEND_PARSE_PARAMETERS_END();
-
-  if (OQS_randombytes_switch_algorithm(alg) != OQS_SUCCESS) {
-    zend_throw_exception(oqs_ce_exc, "Failed to switch RNG algorithm", 0);
-    return;
-  }
-}
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_randombytes_switch_algorithm, 0, 0, 1)
-ZEND_ARG_TYPE_INFO(0, algorithm, IS_STRING, 0)
-ZEND_END_ARG_INFO()
-
-static const zend_function_entry oqs_functions[] = {
-    ZEND_NS_FE("Oqs", randombytes_switch_algorithm,
-               arginfo_randombytes_switch_algorithm) PHP_FE_END};
-
 zend_module_entry oqs_module_entry = {STANDARD_MODULE_HEADER,
                                       "oqs",
-                                      oqs_functions,
+                                      NULL,
                                       PHP_MINIT(oqs),
                                       NULL,
                                       NULL,
