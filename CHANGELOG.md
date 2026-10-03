@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-03
+
 ### Security
 - `Kem::encap()`, `Kem::decap()`, `Sig::sign()` and `Sig::verify()` now validate
   the length of keys and ciphertexts before passing them to liboqs. Previously a
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   safe under ZTS. The system RNG is always used.
 
 ### Changed
-- Tested against liboqs **0.16.0** (previously a 0.14.1-dev commit). Algorithm
+- Bundled liboqs: **0.16.0** (previously tested against a 0.14.1-dev commit). Algorithm
   constants follow the linked liboqs, so with 0.16.0:
   - added KEMs: `HQC-1`, `HQC-3`, `HQC-5`, `eFrodoKEM-{640,976,1344}-{AES,SHAKE}`
   - added signatures: `mqom2_*` (12 variants)
@@ -46,6 +48,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README: test command (`make test`, not `run_tests.php`).
 
 ### Added
+- Prebuilt binaries (liboqs linked statically) attached to every GitHub release:
+  PHP 8.1 - 8.5 NTS for Linux glibc x86_64/arm64 and macOS arm64.
+- `ci/build.sh` / `ci/docker-build.sh`: reproducible build + test + packaging,
+  used both locally and by the `.github/workflows/build.yml` workflow.
+- `composer.json` for [PIE](https://github.com/php/pie)
+  (`pie install guycalledseven/php-ext-oqs`), using the prebuilt binaries when available.
 - `tests/008-input-lengths.phpt`.
 - `CHANGELOG.md`.
 

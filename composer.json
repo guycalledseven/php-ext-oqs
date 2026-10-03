@@ -1,0 +1,38 @@
+{
+    "name": "guycalledseven/php-ext-oqs",
+    "type": "php-ext",
+    "description": "Native PHP extension for post-quantum key encapsulation (ML-KEM) and signatures (ML-DSA, SLH-DSA), with liboqs built in",
+    "keywords": [
+        "post-quantum",
+        "pqc",
+        "liboqs",
+        "ml-kem",
+        "ml-dsa",
+        "slh-dsa",
+        "kyber",
+        "dilithium",
+        "cryptography"
+    ],
+    "homepage": "https://github.com/guycalledseven/php-ext-oqs",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1"
+    },
+    "php-ext": {
+        "extension-name": "oqs",
+        "download-url-method": [
+            "pre-packaged-binary",
+            "composer-default"
+        ],
+        "os-families-exclude": [
+            "windows"
+        ],
+        "configure-options": [
+            {
+                "name": "with-oqs",
+                "description": "liboqs install prefix (directory containing include/oqs and lib/liboqs.a or the shared library); required for source builds",
+                "needs-value": true
+            }
+        ]
+    }
+}

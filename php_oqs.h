@@ -14,7 +14,7 @@ extern zend_module_entry oqs_module_entry;
 
 #define PHP_OQS_NS "Oqs"
 
-#define PHP_OQS_VERSION "0.1.0"
+#define PHP_OQS_VERSION "0.2.0"
 /* version of the liboqs headers this extension was compiled against */
 #define PHP_OQS_LIB_VERSION "liboqs " OQS_VERSION_TEXT
 #ifndef PHP_OQS_LIB_COMMIT

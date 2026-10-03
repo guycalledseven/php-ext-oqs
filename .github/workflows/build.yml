@@ -1,0 +1,87 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['[0-9]+.[0-9]+.[0-9]+*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  LIBOQS_VERSION: '0.16.0'
+
+jobs:
+  linux:
+    name: linux ${{ matrix.arch }} / php ${{ matrix.php }}
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+        arch: [x86_64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test in php:${{ matrix.php }}-cli-bookworm
+        run: ci/docker-build.sh ${{ matrix.php }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}-php${{ matrix.php }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+  macos:
+    name: macos arm64 / php ${{ matrix.php }}
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Build tools
+        run: for f in autoconf cmake; do brew list "$f" >/dev/null 2>&1 || brew install "$f"; done
+      - name: Build and test
+        run: ci/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-php${{ matrix.php }}
+          path: dist/*.zip
+          if-no-files-found: error
+
+  release:
+    name: publish release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [linux, macos]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Check that the tag matches PHP_OQS_VERSION
+        run: |
+          version="$(sed -n 's/^#define PHP_OQS_VERSION "\(.*\)"/\1/p' php_oqs.h)"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "tag $GITHUB_REF_NAME does not match PHP_OQS_VERSION $version" >&2
+            exit 1
+          fi
+      - name: Checksums
+        run: cd dist && sha256sum *.zip > SHA256SUMS && cat SHA256SUMS
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.zip dist/SHA256SUMS \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Prebuilt binaries with liboqs $LIBOQS_VERSION linked statically. See CHANGELOG.md for changes and README.md for installation." \
+            --verify-tag

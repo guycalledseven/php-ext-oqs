@@ -1,4 +1,4 @@
-# php-ext-oqs: PHP bindings for liboqs
+# php-ext-oqs: post-quantum cryptography for PHP
 
 <!-- 
 ![alt text](https://github.com/guycalledseven/php-oqs/actions/workflows/ci.yml/badge.svg)
@@ -6,7 +6,11 @@
 
 ![alt text](https://img.shields.io/badge/license-MIT-blue.svg)
 
-The php-ext-oqs extension makes quantum-resistant cryptography accessible in PHP by providing a direct, high-performance wrapper for the C library [liboqs](https://github.com/open-quantum-safe/liboqs/) from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project.
+Native PHP extension for post-quantum key encapsulation (ML-KEM) and signatures (ML-DSA, SLH-DSA), with liboqs built in.
+
+php-ext-oqs is a native extension (no FFI) built on the C library [liboqs](https://github.com/open-quantum-safe/liboqs/) from the [Open Quantum Safe (OQS)](https://openquantumsafe.org/) project. The prebuilt binaries contain liboqs, so there is no system library to install.
+
+> **Status: experimental.** liboqs states that it is meant for research and prototyping and is [not currently recommended for production use or for protecting sensitive data](https://github.com/open-quantum-safe/liboqs#limitations-and-security). The same applies to this extension, which has not been independently audited.
 
 It provides an object-oriented API for the NIST-standardized PQC algorithms ML-KEM (Kyber), ML-DSA (Dilithium), SLH-DSA (SPHINCS+), and other algorithms supported by liboqs.
 
@@ -20,11 +24,9 @@ Influenced and inspired by great [DEF CON 33 - Post Quantum Panic talk by K Kara
 - Exception-based Error Handling: Throws Oqs\Exception for clear error handling.
 
 ## Requirements
-- PHP 8.1+
-- PHP development headers (php-dev, phpize)
-- A C compiler (e.g., GCC, Clang) and build tools (make, cmake)
-- pkg-config
-- liboqs installed as a shared library on the system.
+- PHP 8.1+ (prebuilt binaries: PHP 8.1 - 8.5, non-thread-safe, Linux glibc x86_64/arm64 and macOS arm64)
+- Nothing else for the prebuilt binaries: liboqs is linked statically into `oqs.so`.
+- Only when building from source: PHP development headers (php-dev, phpize), a C compiler, make, cmake, and liboqs.
 
 ## Project files
 
@@ -46,10 +48,72 @@ Influenced and inspired by great [DEF CON 33 - Post Quantum Panic talk by K Kara
 - Safety: The extension has no module globals and no per-request state; the only state is the liboqs handle owned by each `Oqs\Kem` / `Oqs\Sig` object.
 - Input validation: keys and ciphertexts of the wrong length are rejected with `Oqs\Exception` before they reach liboqs. `Sig::verify()` returns `false` for a signature of impossible length.
 - Output Format: All cryptographic outputs (keys, ciphertexts, signatures) are returned as raw binary strings.
-- liboqs Version: developed and tested against liboqs release **0.16.0**. The set of `ALG_*` constants follows whatever the linked liboqs enables, so it changes between liboqs releases (0.16.0 dropped the `SPHINCS+-*` names in favour of `SLH-DSA`, and added HQC, eFrodoKEM and MQOM). See [CHANGELOG.md](CHANGELOG.md).
+- liboqs Version: release 0.2.0 bundles liboqs **0.16.0** (each release names its bundled liboqs in [CHANGELOG.md](CHANGELOG.md); `php --ri oqs` shows it at runtime). Because liboqs is linked statically, a liboqs security fix reaches you through a new release of this extension, not through a system update. The set of `ALG_*` constants follows whatever the linked liboqs enables, so it changes between liboqs releases (0.16.0 dropped the `SPHINCS+-*` names in favour of `SLH-DSA`, and added HQC, eFrodoKEM and MQOM).
 
 
 ## Installation
+
+Every [release](https://github.com/guycalledseven/php-ext-oqs/releases) ships prebuilt binaries. They contain liboqs, so there is nothing to compile and no library to install.
+
+| Platform | PHP | Asset |
+|---|---|---|
+| Linux x86_64 (glibc 2.34+: Debian 12+, Ubuntu 22.04+, RHEL 9+, official `php` Docker images) | 8.1 - 8.5 NTS | `php_oqs-<version>_php<X.Y>-x86_64-linux-glibc.zip` |
+| Linux arm64 (same) | 8.1 - 8.5 NTS | `php_oqs-<version>_php<X.Y>-arm64-linux-glibc.zip` |
+| macOS 13+ Apple Silicon | 8.1 - 8.5 NTS | `php_oqs-<version>_php<X.Y>-arm64-darwin-bsdlibc.zip` |
+
+Not covered yet: Alpine (musl), thread-safe (ZTS) PHP, Intel Macs, Windows. On those, build from source (below).
+
+### With PIE
+
+[PIE](https://github.com/php/pie) picks the right binary for your PHP, installs it and enables it:
+
+```sh
+pie install guycalledseven/php-ext-oqs
+```
+
+If there is no binary for your platform, PIE falls back to a source build. That needs liboqs on the system and its location: `pie install guycalledseven/php-ext-oqs --with-oqs=/usr/local`.
+
+### Manual download
+
+```sh
+VERSION=0.2.0
+PHP_MM=$(php -r 'echo PHP_MAJOR_VERSION, ".", PHP_MINOR_VERSION;')
+ASSET="php_oqs-${VERSION}_php${PHP_MM}-x86_64-linux-glibc.zip"     # pick the asset for your platform
+curl -fsSLO "https://github.com/guycalledseven/php-ext-oqs/releases/download/$VERSION/$ASSET"
+unzip -o "$ASSET" oqs.so -d "$(php -r 'echo ini_get("extension_dir");')"
+```
+
+Then enable it by adding `extension=oqs` to a `php.ini` (`php --ini` lists the files in use), and check:
+
+```sh
+php --ri oqs
+```
+
+macOS only: a file downloaded with a browser is quarantined, clear that once with `xattr -d com.apple.quarantine "$(php -r 'echo ini_get("extension_dir");')/oqs.so"`.
+
+### In a Dockerfile
+
+```dockerfile
+FROM php:8.4-cli
+ARG OQS_VERSION=0.2.0
+RUN set -eux; \
+    arch="$(uname -m | sed 's/aarch64/arm64/')"; \
+    curl -fsSL -o /tmp/oqs.zip "https://github.com/guycalledseven/php-ext-oqs/releases/download/${OQS_VERSION}/php_oqs-${OQS_VERSION}_php${PHP_VERSION%.*}-${arch}-linux-glibc.zip"; \
+    php -r '$z = new PharData("/tmp/oqs.zip"); $z->extractTo(ini_get("extension_dir"), "oqs.so", true);'; \
+    rm /tmp/oqs.zip; \
+    docker-php-ext-enable oqs
+```
+
+## Building from source
+
+The release binaries are produced by `ci/build.sh`, which builds liboqs and the extension in a scratch directory, runs the tests and writes the zip to `dist/`:
+
+```sh
+ci/build.sh                 # for the PHP on your PATH
+ci/docker-build.sh 8.4      # Linux binary, inside the official php:8.4-cli-bookworm image
+```
+
+The manual steps follow.
 
 Debian:
 
